@@ -1,0 +1,54 @@
+#!/bin/bash
+
+#usage info
+if [[ ($# -ne 1) || ($1 != 'disable' && $1 != 'enable') ]];
+then
+  echo "Usage: $(basename $0) [disable|enable]" >&2
+  exit 1
+fi
+
+#important variables
+port= #TODO: fill port
+server= #TODO: fill ip
+username= #TODO: fill ssh username
+ssh_command="ssh -D $port -f -C -q -N $username@$server"
+
+#enable proxy
+enable_socks() {
+  #kill ssh tunnle if it already exists
+  ssh_process=$(pgrep -f "$ssh_command")
+  if [ ! -z "$ssh_process" ];
+  then
+    echo "SOCKS proxy is already enabled."
+    exit 1
+  fi
+
+  echo "Connecting to $server on $port"
+  $ssh_command
+  networksetup -setsocksfirewallproxy Wi-Fi 127.0.0.1 $port
+  networksetup -setsocksfirewallproxystate Wi-Fi on
+  echo "SOCKS proxy enabled."
+}
+
+#disable proxy
+disable_socks() {
+  networksetup -setsocksfirewallproxystate Wi-Fi off
+  echo "SOCKS proxy disabled."
+  ssh_process=$(pgrep -f "$ssh_command")
+  if [ ! -z "$ssh_process" ];
+  then
+    kill -9 $ssh_process
+  fi
+}
+
+#main program options
+if [ $1 = 'enable' ]; 
+then
+  enable_socks
+elif [ $1 == 'disable' ];
+then
+  disable_socks
+else
+  echo "Invalid option."
+  exit 1
+fi
