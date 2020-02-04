@@ -1,0 +1,39 @@
+#!/bin/bash
+
+begin () {
+    printf "started "
+    docker start myubuntu
+    docker exec -it myubuntu bash
+}
+
+end () {
+    printf "stopped "
+    docker stop myubuntu
+} 
+
+build () {
+    docker build -t ubuntu-personal https://raw.githubusercontent.com/alkeldi/dockerfiles/master/ubuntu-personal/Dockerfile
+    docker create -it --name "myubuntu" --hostname ubuntu ubuntu-personal
+}
+
+usage () {
+    echo "Usage: $0 [ start | stop ]" 1>&2
+    exit 1
+}
+
+
+if [ $# = 0 ]; then
+    begin
+elif [ $# = 1 ]; then
+    if [ $1 = "start" ]; then
+        begin
+    elif [ $1 = "stop" ]; then
+        end
+    elif [ $1 = "build" ]; then
+        build
+    else
+        usage
+    fi
+else
+    usage
+fi
